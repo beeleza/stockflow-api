@@ -16,10 +16,12 @@ Sistema de controle de estoque para gestão de produtos, categorias e movimenta�
 |------------|--------|
 | Java | 21 |
 | Spring Boot | 4.0.5 |
-| PostgreSQL | - |
+| PostgreSQL | 16 |
 | Spring Data JPA | - |
 | SpringDoc OpenAPI | 2.5.0 |
 | Lombok | - |
+| Docker | - |
+| Docker Compose | - |
 
 ## Getting Started
 
@@ -67,12 +69,12 @@ Acesse:
 - Ajuste pode ser positivo ou negativo (não zero)
 - Estoque negativo não permitido
 
-## Variáveis de Ambiente
+## Variáveis de Ambiente (Docker)
 
 ```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
-spring.datasource.username=postgres
-spring.datasource.password=postgres
+SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=postgres
 ```
 
 ## Build
@@ -80,6 +82,31 @@ spring.datasource.password=postgres
 ```bash
 ./mvnw clean package -DskipTests
 ```
+
+## Docker
+
+Subir aplicação completa (Spring + PostgreSQL):
+
+```bash
+docker-compose up -d
+```
+
+Parar aplicação:
+
+```bash
+docker-compose down
+```
+
+Para rebuild após alterações:
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+Acesse:
+- API: http://localhost:8080
+- Swagger: http://localhost:8080/swagger-ui.html
 
 ## Testes
 
