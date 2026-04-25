@@ -1,5 +1,6 @@
 package com.beeleza.stockflow.service;
 
+import com.beeleza.stockflow.dto.StockMovementRequestDTO;
 import com.beeleza.stockflow.entity.Product;
 import com.beeleza.stockflow.entity.StockMovement;
 import com.beeleza.stockflow.entity.enums.MovementType;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -23,28 +25,34 @@ public class StockMovementService {
     private static final String STATUS_ACTIVE = "ACTIVE";
 
     @Transactional
-    public void registerEntry(Long productId, Integer quantity, BigDecimal unitPrice, String reason) {
-        registerMovement(productId, quantity, unitPrice, reason, MovementType.IN);
+    public void registerEntry(StockMovementRequestDTO dto) {
+        registerMovement(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice(), dto.getReason(), MovementType.IN);
     }
 
     @Transactional
-    public void registerExit(Long productId, Integer quantity, BigDecimal unitPrice, String reason) {
-        registerMovement(productId, quantity, unitPrice, reason, MovementType.OUT);
+    public void registerExit(StockMovementRequestDTO dto) {
+        registerMovement(dto.getProductId(), dto.getQuantity(), dto.getUnitPrice(), dto.getReason(), MovementType.OUT);
     }
 
     @Transactional
-    public void registerAdjustment(Long productId, Integer quantity, String reason) {
-        registerMovement(productId, quantity, null, reason, MovementType.ADJUST);
+    public void registerAdjustment(StockMovementRequestDTO dto) {
+        registerMovement(dto.getProductId(), dto.getQuantity(), null, dto.getReason(), MovementType.ADJUST);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StockMovement> findByProductId(Long productId) {
+        validateProductId(productId);
+        return stockMovementRepository.findByProductIdOrderByCreatedAtDesc(productId);
     }
 
     private void registerMovement(Long productId, Integer quantity, BigDecimal unitPrice, String reason, MovementType type) {
-        if (type == MovementType.ADJUST) {
-            validateAdjustmentQuantity(quantity);
-        } else {
-            validateQuantity(quantity);
+        if (quantity == null || quantity <= 0) {
+            throw new ValidationException("Quantidade deve ser maior que zero");
         }
 
         Product product = validateAndGetProduct(productId);
+
+        stockMovementRepository.findByProductIdWithLock(productId);
 
         StockMovement movement = StockMovement.builder()
                 .type(type)
@@ -61,15 +69,12 @@ public class StockMovementService {
         updateStock(product, quantity, type);
     }
 
-    private void validateQuantity(Integer quantity) {
-        if (quantity == null || quantity <= 0) {
-            throw new ValidationException("Quantidade deve ser maior que zero");
+    private void validateProductId(Long productId) {
+        if (productId == null) {
+            throw new ValidationException("Produto é obrigatório");
         }
-    }
-
-    private void validateAdjustmentQuantity(Integer quantity) {
-        if (quantity == null || quantity == 0) {
-            throw new ValidationException("Quantidade de ajuste não pode ser zero");
+        if (!productRepository.existsById(productId)) {
+            throw new ResourceNotFoundException("Produto não encontrado com id: " + productId);
         }
     }
 
