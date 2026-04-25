@@ -16,14 +16,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -108,23 +111,26 @@ class ProductServiceTest {
     }
 
     @Test
-    void findAll_shouldReturnListOfProducts() {
-        List<Product> products = Arrays.asList(product);
-        when(productRepository.findAll()).thenReturn(products);
+    void findAll_shouldReturnPageOfProducts() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Product> productPage = new PageImpl<>(Arrays.asList(product));
+        when(productRepository.findAll(pageable)).thenReturn(productPage);
         when(productMapper.toDTO(product)).thenReturn(responseDTO);
 
-        List<ProductResponseDTO> result = productService.findAll();
+        Page<ProductResponseDTO> result = productService.findAll(pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(productRepository, times(1)).findAll();
+        assertEquals(1, result.getTotalElements());
+        verify(productRepository, times(1)).findAll(pageable);
     }
 
     @Test
-    void findAll_shouldReturnEmptyList_whenNoProducts() {
-        when(productRepository.findAll()).thenReturn(Arrays.asList());
+    void findAll_shouldReturnEmptyPage_whenNoProducts() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Product> emptyPage = new PageImpl<>(Arrays.asList());
+        when(productRepository.findAll(pageable)).thenReturn(emptyPage);
 
-        List<ProductResponseDTO> result = productService.findAll();
+        Page<ProductResponseDTO> result = productService.findAll(pageable);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());

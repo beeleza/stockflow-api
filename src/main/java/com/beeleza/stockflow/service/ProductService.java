@@ -10,12 +10,12 @@ import com.beeleza.stockflow.mapper.ProductMapper;
 import com.beeleza.stockflow.repository.CategoryRepository;
 import com.beeleza.stockflow.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,10 +25,8 @@ public class ProductService {
     private final ProductMapper productMapper;
 
     @Transactional(readOnly = true)
-    public List<ProductResponseDTO> findAll() {
-        return productRepository.findAll().stream()
-                .map(productMapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<ProductResponseDTO> findAll(Pageable pageable) {
+        return productRepository.findAll(pageable).map(productMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
