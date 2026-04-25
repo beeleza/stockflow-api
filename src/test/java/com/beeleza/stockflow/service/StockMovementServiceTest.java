@@ -1,11 +1,13 @@
 package com.beeleza.stockflow.service;
 
 import com.beeleza.stockflow.dto.StockMovementRequestDTO;
+import com.beeleza.stockflow.dto.StockMovementResponseDTO;
 import com.beeleza.stockflow.entity.Product;
 import com.beeleza.stockflow.entity.StockMovement;
 import com.beeleza.stockflow.entity.enums.MovementType;
 import com.beeleza.stockflow.exception.ResourceNotFoundException;
 import com.beeleza.stockflow.exception.ValidationException;
+import com.beeleza.stockflow.mapper.StockMovementMapper;
 import com.beeleza.stockflow.repository.ProductRepository;
 import com.beeleza.stockflow.repository.StockMovementRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +36,9 @@ class StockMovementServiceTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private StockMovementMapper stockMovementMapper;
 
     @InjectMocks
     private StockMovementService stockMovementService;
@@ -221,10 +226,17 @@ class StockMovementServiceTest {
                 .quantity(5)
                 .product(activeProduct)
                 .build();
+        StockMovementResponseDTO responseDTO = StockMovementResponseDTO.builder()
+                .id(1L)
+                .type(MovementType.IN)
+                .quantity(5)
+                .productId(1L)
+                .build();
         when(productRepository.existsById(1L)).thenReturn(true);
         when(stockMovementRepository.findByProductIdOrderByCreatedAtDesc(1L)).thenReturn(Arrays.asList(movement));
+        when(stockMovementMapper.toDTO(movement)).thenReturn(responseDTO);
 
-        List<StockMovement> result = stockMovementService.findByProductId(1L);
+        List<StockMovementResponseDTO> result = stockMovementService.findByProductId(1L);
 
         assertNotNull(result);
         assertEquals(1, result.size());

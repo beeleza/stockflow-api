@@ -1,11 +1,13 @@
 package com.beeleza.stockflow.service;
 
 import com.beeleza.stockflow.dto.StockMovementRequestDTO;
+import com.beeleza.stockflow.dto.StockMovementResponseDTO;
 import com.beeleza.stockflow.entity.Product;
 import com.beeleza.stockflow.entity.StockMovement;
 import com.beeleza.stockflow.entity.enums.MovementType;
 import com.beeleza.stockflow.exception.ResourceNotFoundException;
 import com.beeleza.stockflow.exception.ValidationException;
+import com.beeleza.stockflow.mapper.StockMovementMapper;
 import com.beeleza.stockflow.repository.ProductRepository;
 import com.beeleza.stockflow.repository.StockMovementRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class StockMovementService {
     private final StockMovementRepository stockMovementRepository;
     private final ProductRepository productRepository;
+    private final StockMovementMapper stockMovementMapper;
 
     private static final String STATUS_ACTIVE = "ACTIVE";
 
@@ -40,9 +44,19 @@ public class StockMovementService {
     }
 
     @Transactional(readOnly = true)
-    public List<StockMovement> findByProductId(Long productId) {
+    public List<StockMovementResponseDTO> findByProductId(Long productId) {
         validateProductId(productId);
-        return stockMovementRepository.findByProductIdOrderByCreatedAtDesc(productId);
+        return stockMovementRepository.findByProductIdOrderByCreatedAtDesc(productId)
+                .stream()
+                .map(stockMovementMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public StockMovementResponseDTO findById(Long id) {
+        StockMovement movement = stockMovementRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movimentação não encontrada com id: " + id));
+        return stockMovementMapper.toDTO(movement);
     }
 
     private void registerMovement(Long productId, Integer quantity, BigDecimal unitPrice, String reason, MovementType type) {
