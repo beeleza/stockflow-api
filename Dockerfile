@@ -10,4 +10,4 @@ RUN ./mvnw clean package -DskipTests
 
 RUN cp target/*.jar app.jar
 
-ENTRYPOINT ["java", "-jar",
+ENTRYPOINT ["java", "-jar", "app.jar"]
